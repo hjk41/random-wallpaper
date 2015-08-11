@@ -5,7 +5,7 @@ Depends:
 ========= 
 	https://github.com/hjk41/SetWallpaper
 
-	Official Python cannot call windows api to set wallpaper. So we rely
+Official Python cannot call windows api to set wallpaper. So we rely
 on this standalone program to set the wallpaper.
 
 Any comments or suggestions, drop me a mail: chuntao[dot]hong[at]gmail.com
