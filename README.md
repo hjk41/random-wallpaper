@@ -4,6 +4,7 @@ Geographics website and sets it as your Windows Wallpaper.
 Depends:
 ========= 
 	https://github.com/hjk41/SetWallpaper
+
 	Official Python cannot call windows api to set wallpaper. So we rely
 on this standalone program to set the wallpaper.
 
