@@ -27,7 +27,7 @@ class RandomWallPaper:
         while (retry):
             try:
                 # randomly choose a page
-                page_num = random.randrange(40,68)
+                page_num = random.randrange(1,68)
                 collection_page_url = self.index_page_url + str(page_num)
                 page = urllib.request.urlopen(collection_page_url)
                 photoPages = GetPhotoUrls(page.read().decode())
