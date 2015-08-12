@@ -43,10 +43,10 @@ class RandomWallPaper:
                     photo_page_url = hyper_link
                 else:
                     photo_page_url = self.base_url + hyper_link
-                print("[photo_page] ", photo_page_url)
+                #print("[photo_page] ", photo_page_url)
                 page = urllib.request.urlopen(photo_page_url)
                 photoUrl = GetPhotoUrl(page.read().decode())
-                print("[photo] ", photoUrl)
+                #print("[photo] ", photoUrl)
                 if photoUrl is None:
                     continue
                 if (not photoUrl.endswith(".jpg")):
@@ -68,7 +68,9 @@ class RandomWallPaper:
             return
         currentPath = os.path.dirname(os.path.realpath(sys.argv[0]))
         cmd = os.path.dirname(os.path.realpath(sys.argv[0])) + '\\SetWallPaper.exe'
-        p = subprocess.Popen([cmd, '__randompic.jpg'])
+        sinfo = subprocess.STARTUPINFO()
+        sinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        p = subprocess.Popen([cmd, '__randompic.jpg'], startupinfo = sinfo)
         result = p.wait()
         if result != 0:
             print("failed to set wallpaper")
