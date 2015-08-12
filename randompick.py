@@ -16,6 +16,7 @@ import random
 import os
 from html.parser import HTMLParser
 import sys
+import subprocess
 
 class RandomWallPaper:
     def __init__(self):
@@ -56,6 +57,7 @@ class RandomWallPaper:
                 data = urllib.request.urlopen(photoUrl).read()
                 filename = "__randompic.jpg"
                 open(filename, "wb").write(data)
+                print("%s get photo: %s"%(str(datetime.now()), photoUrl))
                 return filename
             except:
                 print("Unexpected error:", sys.exc_info())
@@ -64,7 +66,10 @@ class RandomWallPaper:
         file = self.get_file()
         if not file:
             return
-        result = os.system('SetWallPaper.exe __randompic.jpg')
+        currentPath = os.path.dirname(os.path.realpath(sys.argv[0]))
+        cmd = os.path.dirname(os.path.realpath(sys.argv[0])) + '\\SetWallPaper.exe'
+        p = subprocess.Popen([cmd, '__randompic.jpg'])
+        result = p.wait()
         if result != 0:
             print("failed to set wallpaper")
     
@@ -89,7 +94,7 @@ class DivHrefRetriver(HTMLParser):
             for attr in attrs:
                 if (attr[0] == 'href'):
                     if (attr[1].find('?') != -1):
-                        print(attr[1])
+                        pass
                     self.allHrefs.append(attr[1])
                     #self.inDivTag = False
                     break
