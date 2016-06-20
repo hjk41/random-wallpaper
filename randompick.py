@@ -18,6 +18,21 @@ from html.parser import HTMLParser
 import sys
 import subprocess
 
+import logging
+import logging.handlers as handlers
+
+def setup_logger(level=logging.INFO):
+    '''
+    Setup root logger so we can easily use it
+    Params:
+        level:  string  logging level
+    '''
+    logging.root.setLevel(logging.INFO)
+    formatter = logging.Formatter('[%(asctime)s] %(name)s-%(levelname)s: %(message)s')
+    handler = handlers.TimedRotatingFileHandler('log.txt', backupCount=100)
+    handler.setFormatter(formatter)
+    logging.root.addHandler(handler)
+
 class RandomWallPaper:
     def __init__(self):
         self.index_page_url = "http://photography.nationalgeographic.com/photography/photo-of-the-day/archive/?page="
@@ -28,7 +43,7 @@ class RandomWallPaper:
         while (retry):
             try:
                 # randomly choose a page
-                page_num = random.randrange(1,68)
+                page_num = random.randrange(1,76)
                 collection_page_url = self.index_page_url + str(page_num)
                 page = urllib.request.urlopen(collection_page_url)
                 photoPages = GetPhotoUrls(page.read().decode())
@@ -58,6 +73,7 @@ class RandomWallPaper:
                 filename = "__randompic.jpg"
                 open(filename, "wb").write(data)
                 print("%s get photo: %s"%(str(datetime.now()), photoUrl))
+                logging.info('Photo url: {}'.format(photo_page_url))
                 return filename
             except:
                 print("Unexpected error:", sys.exc_info())
@@ -128,5 +144,6 @@ def GetPhotoUrl(html):
         return None
 
 if __name__ == "__main__":
+    setup_logger()
     potd = RandomWallPaper()
     potd.set_wallpaper()
