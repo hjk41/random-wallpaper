@@ -36,7 +36,7 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
-        self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080'
+        self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
 
     def get_file(self):
