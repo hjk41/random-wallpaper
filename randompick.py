@@ -17,6 +17,7 @@ import os
 from html.parser import HTMLParser
 import sys
 import subprocess
+import re
 
 import logging
 import logging.handlers as handlers
@@ -35,45 +36,30 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
-        self.index_page_url = "http://photography.nationalgeographic.com/photography/photo-of-the-day/archive/?page="
-        self.base_url = 'http://photography.nationalgeographic.com'
+        self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080'
+        self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
 
     def get_file(self):
-        retry = True
-        while (retry):
+        for i in range(1,10):
             try:
                 # randomly choose a page
-                page_num = random.randrange(1,76)
-                collection_page_url = self.index_page_url + str(page_num)
-                page = urllib.request.urlopen(collection_page_url)
-                photoPages = GetPhotoUrls(page.read().decode())
-                if(len(photoPages) == 0):
-                    continue
-                # we now have a collection of photos, randomly pick one
-                pic_num = random.randrange(0,len(photoPages))
-                hyper_link = photoPages[pic_num]
-                # now parse the photo page and download photo
-                photo_page_url = ''
-                if (hyper_link.startswith("http")):
-                    photo_page_url = hyper_link
-                else:
-                    photo_page_url = self.base_url + hyper_link
-                #print("[photo_page] ", photo_page_url)
-                page = urllib.request.urlopen(photo_page_url)
-                photoUrl = GetPhotoUrl(page.read().decode())
-                #print("[photo] ", photoUrl)
-                if photoUrl is None:
-                    continue
-                if (not photoUrl.endswith(".jpg")):
-                    continue
-                if (photoUrl.startswith("//")):
-                    photoUrl = "http:" + photoUrl
+                first = random.randrange(1, 1000)
+                collection_page_url = self.base_url + '&first=' + str(first)
+                req = urllib.request.Request(collection_page_url, None, headers=self.urlopenheader)
+                resp = urllib.request.urlopen(req)
+                html = resp.read().decode()                
+                links = re.findall('imgurl:&quot;(.*?)&quot;',html)
+                pages = re.findall('surl:&quot;(.*?)&quot;',html)
+                idx = random.randrange(1, len(links))
+                photoUrl = links[idx]
+                photoPage = pages[idx]
                 # now, download the picture
-                data = urllib.request.urlopen(photoUrl).read()
+                req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
+                data = urllib.request.urlopen(req).read()
                 filename = "__randompic.jpg"
                 open(filename, "wb").write(data)
                 print("%s get photo: %s"%(str(datetime.now()), photoUrl))
-                logging.info('Photo url: {}'.format(photo_page_url))
+                logging.info('Photo page: {}'.format(photoPage))
                 return filename
             except:
                 print("Unexpected error:", sys.exc_info())

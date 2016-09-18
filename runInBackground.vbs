@@ -1,4 +1,4 @@
-python = "c:\\python34\\pythonw.exe"
+python = "pythonw.exe"
 
 Dim WinScriptHost
 Set WinScriptHost = CreateObject("WScript.Shell")
