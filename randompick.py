@@ -36,6 +36,9 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
+        #self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
+        #self.base_url = 'http://cn.bing.com/images/search?&q=500px&qft=+filterui:imagesize-wallpaper+filterui:aspect-wide'
+        #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
 
@@ -43,26 +46,28 @@ class RandomWallPaper:
         for i in range(1,10):
             try:
                 # randomly choose a page
-                first = random.randrange(1, 1000)
+                first = random.randrange(1, 200)
                 collection_page_url = self.base_url + '&first=' + str(first)
                 req = urllib.request.Request(collection_page_url, None, headers=self.urlopenheader)
                 resp = urllib.request.urlopen(req)
                 html = resp.read().decode()                
-                links = re.findall('imgurl:&quot;(.*?)&quot;',html)
-                pages = re.findall('surl:&quot;(.*?)&quot;',html)
+                links = re.findall('murl&quot;:&quot;(.*?)&quot;',html)
+                pages = re.findall('purl&quot;:&quot;(.*?)&quot;',html)
                 idx = random.randrange(1, len(links))
                 photoUrl = links[idx]
                 photoPage = pages[idx]
                 # now, download the picture
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
                 data = urllib.request.urlopen(req).read()
+                if (len(data) < 50 * 1024):
+                    continue
                 filename = "__randompic.jpg"
                 open(filename, "wb").write(data)
-                print("%s get photo: %s"%(str(datetime.now()), photoUrl))
+                logging.info("%s get photo: %s"%(str(datetime.now()), photoUrl))
                 logging.info('Photo page: {}'.format(photoPage))
                 return filename
             except:
-                print("Unexpected error:", sys.exc_info())
+                logging.info("Unexpected error:", sys.exc_info())
     
     def set_wallpaper(self):
         file = self.get_file()
@@ -73,9 +78,13 @@ class RandomWallPaper:
         sinfo = subprocess.STARTUPINFO()
         sinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         p = subprocess.Popen([cmd, '__randompic.jpg'], startupinfo = sinfo)
-        result = p.wait()
-        if result != 0:
-            print("failed to set wallpaper")
+        try:
+            result = p.wait(10)
+            if result != 0:
+                logging.info("failed to set wallpaper")
+        except:
+            logging.info('Failed to set wallpaper in 10 seconds, killing it');
+            p.kill();
     
 class DivHrefRetriver(HTMLParser):
     """ Retrieve all the href contained in <div class='divClass'><a href='HREF'/></div>
