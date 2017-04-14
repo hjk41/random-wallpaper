@@ -18,6 +18,9 @@ from html.parser import HTMLParser
 import sys
 import subprocess
 import re
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import json
 
 import logging
 import logging.handlers as handlers
@@ -45,18 +48,27 @@ class RandomWallPaper:
     def get_file(self):
         for i in range(1,10):
             try:
-                # randomly choose a page
-                first = random.randrange(1, 200)
-                collection_page_url = self.base_url + '&first=' + str(first)
-                req = urllib.request.Request(collection_page_url, None, headers=self.urlopenheader)
-                resp = urllib.request.urlopen(req)
-                html = resp.read().decode()                
-                links = re.findall('murl&quot;:&quot;(.*?)&quot;',html)
-                pages = re.findall('purl&quot;:&quot;(.*?)&quot;',html)
+                browser = webdriver.PhantomJS()
+                browser.get(self.base_url)
+                for _ in range(500):
+                    browser.execute_script("window.scrollBy(0,10000)")
+                browser.find_element_by_xpath('//a[@class="btn_seemore"]')
+                for _ in range(500):
+                    browser.execute_script("window.scrollBy(0,10000)")
+                print("Get to the end of the windows, now choosing one image at random")
+                pics = browser.find_elements_by_xpath('//a[@class="iusc"]')
+                links = []
+                pages = []
+                for p in pics:
+                    js = json.loads(p.get_attribute('m'))
+                    links.append(js["murl"])
+                    pages.append(js["purl"])
+                print("Got {} links".format(len(links)))
                 idx = random.randrange(1, len(links))
                 photoUrl = links[idx]
                 photoPage = pages[idx]
                 # now, download the picture
+                print("Downloading picture {}".format(photoUrl))
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
                 data = urllib.request.urlopen(req).read()
                 if (len(data) < 50 * 1024):
@@ -68,6 +80,8 @@ class RandomWallPaper:
                 return filename
             except:
                 logging.info("Unexpected error:", sys.exc_info())
+            finally:
+                browser.close()
     
     def set_wallpaper(self):
         file = self.get_file()
