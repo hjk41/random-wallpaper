@@ -49,6 +49,7 @@ class RandomWallPaper:
         for i in range(1,10):
             try:
                 browser = webdriver.PhantomJS()
+                browser.set_window_position(-1000,-1000)
                 browser.get(self.base_url)
                 for _ in range(500):
                     browser.execute_script("window.scrollBy(0,10000)")
@@ -63,6 +64,7 @@ class RandomWallPaper:
                     js = json.loads(p.get_attribute('m'))
                     links.append(js["murl"])
                     pages.append(js["purl"])
+                browser.quit()
                 print("Got {} links".format(len(links)))
                 idx = random.randrange(1, len(links))
                 photoUrl = links[idx]
@@ -81,7 +83,7 @@ class RandomWallPaper:
             except:
                 logging.info("Unexpected error:", sys.exc_info())
             finally:
-                browser.close()
+                browser.quit()
     
     def set_wallpaper(self):
         file = self.get_file()
