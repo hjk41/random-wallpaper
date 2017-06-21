@@ -17,6 +17,8 @@ import os
 from html.parser import HTMLParser
 import sys
 import subprocess
+import socks
+import socket
 import re
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -46,16 +48,19 @@ class RandomWallPaper:
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
 
     def get_file(self):
-        for i in range(1,10):
+        for i in range(0,1):
             try:
                 browser = webdriver.PhantomJS()
-                browser.set_window_position(-1000,-1000)
+                browser.set_window_position(0,0)
                 browser.get(self.base_url)
                 for _ in range(500):
                     browser.execute_script("window.scrollBy(0,10000)")
-                browser.find_element_by_xpath('//a[@class="btn_seemore"]')
-                for _ in range(500):
-                    browser.execute_script("window.scrollBy(0,10000)")
+                try:
+                    browser.find_element_by_xpath('//a[@class="btn_seemore"]')
+                    for _ in range(500):
+                        browser.execute_script("window.scrollBy(0,10000)")
+                except:
+                    pass
                 print("Get to the end of the windows, now choosing one image at random")
                 pics = browser.find_elements_by_xpath('//a[@class="iusc"]')
                 links = []
@@ -71,8 +76,15 @@ class RandomWallPaper:
                 photoPage = pages[idx]
                 # now, download the picture
                 print("Downloading picture {}".format(photoUrl))
+                # use proxy
+                socks.set_default_proxy(socks.SOCKS5, "localhost")
+                socket.socket = socks.socksocket
+                def getaddrinfo(*args):
+                    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+                socket.getaddrinfo = getaddrinfo
+
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
-                data = urllib.request.urlopen(req).read()
+                data = urllib.request.urlopen(req, timeout=30).read()
                 if (len(data) < 50 * 1024):
                     continue
                 filename = "__randompic.jpg"
@@ -82,7 +94,6 @@ class RandomWallPaper:
                 return filename
             except:
                 logging.info("Unexpected error:", sys.exc_info())
-            finally:
                 browser.quit()
     
     def set_wallpaper(self):
@@ -155,6 +166,11 @@ def GetPhotoUrl(html):
         return None
 
 if __name__ == "__main__":
+    #socks.set_default_proxy(socks.SOCKS5, "localhost")
+    #socket.socket = socks.socksocket
+    #def getaddrinfo(*args):
+    #    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+    #socket.getaddrinfo = getaddrinfo
     setup_logger()
     potd = RandomWallPaper()
     potd.set_wallpaper()
