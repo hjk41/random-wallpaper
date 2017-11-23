@@ -41,10 +41,9 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
+        #self.base_url = 'http://cn.bing.com/images/search?q=wallpaper+nature&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
+        self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         #self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
-        #self.base_url = 'http://cn.bing.com/images/search?&q=500px&qft=+filterui:imagesize-wallpaper+filterui:aspect-wide'
-        #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
-        self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
 
     def get_file(self):
@@ -53,14 +52,13 @@ class RandomWallPaper:
                 browser = webdriver.PhantomJS()
                 browser.set_window_position(0,0)
                 browser.get(self.base_url)
-                for _ in range(500):
+                for _ in range(10):
                     browser.execute_script("window.scrollBy(0,10000)")
-                try:
-                    browser.find_element_by_xpath('//a[@class="btn_seemore"]')
-                    for _ in range(500):
-                        browser.execute_script("window.scrollBy(0,10000)")
-                except:
-                    pass
+                    try:
+                        btn = browser.find_element_by_xpath('//a[@class="btn_seemore"]')
+                        btn.click()
+                    except:
+                        pass
                 print("Get to the end of the windows, now choosing one image at random")
                 pics = browser.find_elements_by_xpath('//a[@class="iusc"]')
                 links = []
@@ -77,11 +75,11 @@ class RandomWallPaper:
                 # now, download the picture
                 print("Downloading picture {}".format(photoUrl))
                 # use proxy
-                socks.set_default_proxy(socks.SOCKS5, "localhost")
-                socket.socket = socks.socksocket
-                def getaddrinfo(*args):
-                    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
-                socket.getaddrinfo = getaddrinfo
+                #socks.set_default_proxy(socks.SOCKS5, "localhost")
+                #socket.socket = socks.socksocket
+                #def getaddrinfo(*args):
+                #    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+                #socket.getaddrinfo = getaddrinfo
 
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
                 data = urllib.request.urlopen(req, timeout=30).read()
