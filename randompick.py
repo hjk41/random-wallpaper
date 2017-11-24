@@ -45,6 +45,9 @@ class RandomWallPaper:
         self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         #self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
+        self.blacklist = []
+        with open('blacklist.txt', 'r') as f:
+            self.blacklist.append(f.readline())
 
     def get_file(self):
         for i in range(0,1):
@@ -65,8 +68,15 @@ class RandomWallPaper:
                 pages = []
                 for p in pics:
                     js = json.loads(p.get_attribute('m'))
-                    links.append(js["murl"])
-                    pages.append(js["purl"])
+                    link = js["murl"]
+                    blacklisted = False
+                    for l in self.blacklist:
+                        if link.startswith(l):
+                            blacklisted = True
+                            break
+                    if not blacklisted:
+                        links.append(link)
+                        pages.append(js["purl"])
                 browser.quit()
                 print("Got {} links".format(len(links)))
                 idx = random.randrange(1, len(links))
