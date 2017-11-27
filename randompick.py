@@ -8,7 +8,7 @@
 #
 # Any comments or suggestions, drop me a mail: chuntao.hong@gmail.com
 
-
+import time
 import urllib.request
 from datetime import datetime
 from datetime import date
@@ -20,8 +20,7 @@ import subprocess
 import socks
 import socket
 import re
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+
 import json
 
 import logging
@@ -41,47 +40,39 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
-        #self.base_url = 'http://cn.bing.com/images/search?q=wallpaper+nature&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
-        self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
-        #self.base_url = 'http://cn.bing.com/images/search?q=national+geographic&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide'
+        self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
         self.blacklist = []
         with open('blacklist.txt', 'r') as f:
             self.blacklist.append(f.readline())
 
     def get_file(self):
-        for i in range(0,1):
+        for i in range(0,3):
             try:
-                browser = webdriver.PhantomJS()
-                browser.set_window_position(0,0)
-                browser.get(self.base_url)
-                for _ in range(10):
-                    browser.execute_script("window.scrollBy(0,10000)")
-                    try:
-                        btn = browser.find_element_by_xpath('//a[@class="btn_seemore"]')
-                        btn.click()
-                    except:
-                        pass
-                print("Get to the end of the windows, now choosing one image at random")
-                pics = browser.find_elements_by_xpath('//a[@class="iusc"]')
-                links = []
-                pages = []
-                for p in pics:
-                    js = json.loads(p.get_attribute('m'))
-                    link = js["murl"]
-                    blacklisted = False
-                    for l in self.blacklist:
-                        if link.startswith(l):
-                            blacklisted = True
+                request_url = self.base_url + '&first=' + str(random.randint(0, 1000))
+                req = urllib.request.Request(request_url, None, headers=self.urlopenheader)
+                response = urllib.request.urlopen(req, timeout=10)
+                html = response.read().decode('utf-8')
+                matches = re.findall('(m="{.*?purl&quot;:&quot;)(.*?)(&quot;.*?murl&quot;:&quot;)(.*?)(&quot;.*?)}',html)
+                links = [m[3] for m in matches]
+                pages = [m[1] for m in matches]
+                logging.info("Got {} links".format(len(links)))
+                photoUrl = ""
+                pageUrl = ""
+                while True:
+                    idx = random.randrange(1, len(links))
+                    photoUrl = links[idx]
+                    pageUrl = pages[idx]
+                    ok = True
+                    for p in self.blacklist:
+                        if photoUrl.startswith(p):
+                            ok = False
                             break
-                    if not blacklisted:
-                        links.append(link)
-                        pages.append(js["purl"])
-                browser.quit()
-                print("Got {} links".format(len(links)))
-                idx = random.randrange(1, len(links))
-                photoUrl = links[idx]
-                photoPage = pages[idx]
+                    if ok:
+                        break
+                    else:
+                        if len(links) <=2:
+                            raise Exception("got too few links")
                 # now, download the picture
                 print("Downloading picture {}".format(photoUrl))
                 # use proxy
@@ -90,7 +81,6 @@ class RandomWallPaper:
                 #def getaddrinfo(*args):
                 #    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
                 #socket.getaddrinfo = getaddrinfo
-
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
                 data = urllib.request.urlopen(req, timeout=30).read()
                 if (len(data) < 50 * 1024):
@@ -98,7 +88,7 @@ class RandomWallPaper:
                 filename = "__randompic.jpg"
                 open(filename, "wb").write(data)
                 logging.info("%s get photo: %s"%(str(datetime.now()), photoUrl))
-                logging.info('Photo page: {}'.format(photoPage))
+                logging.info("page: {}".format(pageUrl))
                 return filename
             except:
                 logging.info("Unexpected error:", sys.exc_info())
