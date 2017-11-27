@@ -40,6 +40,7 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
+        random.seed(datetime.now())
         self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
         self.blacklist = []
@@ -90,9 +91,8 @@ class RandomWallPaper:
                 logging.info("%s get photo: %s"%(str(datetime.now()), photoUrl))
                 logging.info("page: {}".format(pageUrl))
                 return filename
-            except:
-                logging.info("Unexpected error:", sys.exc_info())
-                browser.quit()
+            except Exception as e:
+                logging.info("Unexpected error: {}".format(str(e)))
     
     def set_wallpaper(self):
         file = self.get_file()
