@@ -40,9 +40,9 @@ def setup_logger(level=logging.INFO):
 
 class RandomWallPaper:
     def __init__(self):
-        random.seed(datetime.now())
-        self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
-        self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0'}
+        #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
+        self.base_url = 'http://www.bing.com/images/async?q=bing+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
+        self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/57.0'}
         self.blacklist = []
         with open('blacklist.txt', 'r') as f:
             self.blacklist.append(f.readline())
@@ -50,13 +50,21 @@ class RandomWallPaper:
     def get_file(self):
         for i in range(0,3):
             try:
-                request_url = self.base_url + '&first=' + str(random.randint(0, 1000))
+                first = random.randint(0,500);
+                logging.info("Rand value: {}".format(first))
+                request_url = self.base_url.format(first)
                 req = urllib.request.Request(request_url, None, headers=self.urlopenheader)
                 response = urllib.request.urlopen(req, timeout=10)
                 html = response.read().decode('utf-8')
                 matches = re.findall('(m="{.*?purl&quot;:&quot;)(.*?)(&quot;.*?murl&quot;:&quot;)(.*?)(&quot;.*?)}',html)
                 links = [m[3] for m in matches]
                 pages = [m[1] for m in matches]
+                if not links:
+                    if i == 2:
+                        logging.warn('failed to get any image, stopping...')
+                        break
+                    logging.warn('{} got no link, trying ...'.format(i))
+                    continue
                 logging.info("Got {} links".format(len(links)))
                 photoUrl = ""
                 pageUrl = ""
