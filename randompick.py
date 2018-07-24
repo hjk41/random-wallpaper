@@ -34,7 +34,7 @@ def setup_logger(level=logging.INFO):
     '''
     logging.root.setLevel(logging.INFO)
     formatter = logging.Formatter('[%(asctime)s] %(name)s-%(levelname)s: %(message)s')
-    handler = handlers.TimedRotatingFileHandler('log.txt', backupCount=100)
+    handler = handlers.RotatingFileHandler('log.txt')
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
 
@@ -43,14 +43,14 @@ class RandomWallPaper:
         #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
         self.base_url = 'http://www.bing.com/images/async?q=bing+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/57.0'}
-        self.blacklist = []
+        self.blacklist = set()
         with open('blacklist.txt', 'r') as f:
-            self.blacklist.append(f.readline())
+            self.blacklist = set([line.strip() for line in f.readlines()])
 
     def get_file(self):
         for i in range(0,3):
             try:
-                first = random.randint(0,500);
+                first = random.randint(0,200);
                 logging.info("Rand value: {}".format(first))
                 request_url = self.base_url.format(first)
                 req = urllib.request.Request(request_url, None, headers=self.urlopenheader)
@@ -72,16 +72,8 @@ class RandomWallPaper:
                     idx = random.randrange(1, len(links))
                     photoUrl = links[idx]
                     pageUrl = pages[idx]
-                    ok = True
-                    for p in self.blacklist:
-                        if photoUrl.startswith(p):
-                            ok = False
-                            break
-                    if ok:
+                    if not photoUrl in self.blacklist:
                         break
-                    else:
-                        if len(links) <=2:
-                            raise Exception("got too few links")
                 # now, download the picture
                 print("Downloading picture {}".format(photoUrl))
                 # use proxy
