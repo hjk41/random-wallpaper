@@ -34,14 +34,15 @@ def setup_logger(level=logging.INFO):
     '''
     logging.root.setLevel(logging.INFO)
     formatter = logging.Formatter('[%(asctime)s] %(name)s-%(levelname)s: %(message)s')
-    handler = handlers.RotatingFileHandler('log.txt')
+    handler = handlers.RotatingFileHandler('log.txt', maxBytes=65536)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
 
 class RandomWallPaper:
     def __init__(self):
         #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
-        self.base_url = 'http://www.bing.com/images/async?q=bing+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
+        #self.base_url = 'http://www.bing.com/images/async?q=bing+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
+        self.base_url = 'http://www.bing.com/images/async?q=nature+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
         self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/57.0'}
         self.blacklist = set()
         with open('blacklist.txt', 'r') as f:
@@ -102,7 +103,7 @@ class RandomWallPaper:
         cmd = os.path.dirname(os.path.realpath(sys.argv[0])) + '\\SetWallPaper.exe'
         sinfo = subprocess.STARTUPINFO()
         sinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        p = subprocess.Popen([cmd, '__randompic.jpg'], startupinfo = sinfo)
+        p = subprocess.Popen([cmd, '__randompic.jpg', 'fit'], startupinfo = sinfo)
         try:
             result = p.wait(10)
             if result != 0:
@@ -164,11 +165,11 @@ def GetPhotoUrl(html):
         return None
 
 if __name__ == "__main__":
-    #socks.set_default_proxy(socks.SOCKS5, "localhost")
-    #socket.socket = socks.socksocket
-    #def getaddrinfo(*args):
-    #    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
-    #socket.getaddrinfo = getaddrinfo
+    socks.set_default_proxy(socks.SOCKS5, "localhost")
+    socket.socket = socks.socksocket
+    def getaddrinfo(*args):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+    socket.getaddrinfo = getaddrinfo
     setup_logger()
     potd = RandomWallPaper()
     potd.set_wallpaper()
