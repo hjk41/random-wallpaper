@@ -34,16 +34,21 @@ def setup_logger(level=logging.INFO):
     '''
     logging.root.setLevel(logging.INFO)
     formatter = logging.Formatter('[%(asctime)s] %(name)s-%(levelname)s: %(message)s')
-    handler = handlers.RotatingFileHandler('log.txt', maxBytes=65536)
+    handler = handlers.RotatingFileHandler('log.txt', maxBytes=16384, backupCount=1)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
 
+def setup_proxy():
+    socks.set_default_proxy(socks.SOCKS5, "localhost")
+    socket.socket = socks.socksocket
+    def getaddrinfo(*args):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
+    socket.getaddrinfo = getaddrinfo
+
 class RandomWallPaper:
     def __init__(self):
-        #self.base_url = 'http://cn.bing.com/images/search?q=bing+wallpaper&qft=+filterui:imagesize-custom_1920_1080+filterui:aspect-wide&async=content'
-        #self.base_url = 'http://www.bing.com/images/async?q=bing+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
-        self.base_url = 'http://www.bing.com/images/async?q=nature+wallpaper&qft=+filterui:aspect-wide+filterui:imagesize-wallpaper&first={}&ensearch=1'
-        self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/57.0'}
+        self.base_url = 'https://www.bing.com/images/async?q=wallpaper&first={}&count=30&qft=+filterui:imagesize-wallpaper'
+        self.urlopenheader = { 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'}
         self.blacklist = set()
         with open('blacklist.txt', 'r') as f:
             self.blacklist = set([line.strip() for line in f.readlines()])
@@ -51,12 +56,13 @@ class RandomWallPaper:
     def get_file(self):
         for i in range(0,3):
             try:
-                first = random.randint(0,200);
+                first = random.randint(0,2000);
                 logging.info("Rand value: {}".format(first))
                 request_url = self.base_url.format(first)
                 req = urllib.request.Request(request_url, None, headers=self.urlopenheader)
                 response = urllib.request.urlopen(req, timeout=10)
-                html = response.read().decode('utf-8')
+                html_bytes = response.read()
+                html = html_bytes.decode('utf-8')
                 matches = re.findall('(m="{.*?purl&quot;:&quot;)(.*?)(&quot;.*?murl&quot;:&quot;)(.*?)(&quot;.*?)}',html)
                 links = [m[3] for m in matches]
                 pages = [m[1] for m in matches]
@@ -66,23 +72,24 @@ class RandomWallPaper:
                         break
                     logging.warn('{} got no link, trying ...'.format(i))
                     continue
+                print("Got {} links".format(len(links)))
                 logging.info("Got {} links".format(len(links)))
                 photoUrl = ""
                 pageUrl = ""
-                while True:
-                    idx = random.randrange(1, len(links))
+                idx = 0
+                while (idx < len(links)):
                     photoUrl = links[idx]
                     pageUrl = pages[idx]
-                    if not photoUrl in self.blacklist:
+                    ok = True
+                    for black in self.blacklist:
+                        if photoUrl.startswith(black):
+                            ok = False
+                            break
+                    if ok:
                         break
+                    idx = idx + 1
                 # now, download the picture
                 print("Downloading picture {}".format(photoUrl))
-                # use proxy
-                #socks.set_default_proxy(socks.SOCKS5, "localhost")
-                #socket.socket = socks.socksocket
-                #def getaddrinfo(*args):
-                #    return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
-                #socket.getaddrinfo = getaddrinfo
                 req = urllib.request.Request(photoUrl, None, headers=self.urlopenheader)
                 data = urllib.request.urlopen(req, timeout=30).read()
                 if (len(data) < 50 * 1024):
@@ -165,11 +172,8 @@ def GetPhotoUrl(html):
         return None
 
 if __name__ == "__main__":
-    socks.set_default_proxy(socks.SOCKS5, "localhost")
-    socket.socket = socks.socksocket
-    def getaddrinfo(*args):
-        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', (args[0], args[1]))]
-    socket.getaddrinfo = getaddrinfo
     setup_logger()
+    # use proxy
+    setup_proxy()
     potd = RandomWallPaper()
     potd.set_wallpaper()
